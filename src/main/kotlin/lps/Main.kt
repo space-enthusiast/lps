@@ -1,20 +1,37 @@
 package lps
 
 class PubSub {
-    private val subscribers = mutableMapOf<String, MutableList<(String) -> Unit>>()
+    private val broker = mutableMapOf<String, Topic>()
+
+    private class Topic {
+        val queue = ArrayDeque<String>()
+        val subscribers = mutableListOf<(String) -> Unit>()
+    }
 
     fun subscribe(topic: String, handler: (String) -> Unit) {
-        if(subscribers[topic] == null){
-            subscribers[topic] = mutableListOf(handler)
+        val t = broker[topic]
+        if(t == null){
+            broker[topic] = Topic().also { it.subscribers.add(handler) }
         } else {
-            subscribers[topic]?.add(handler)
+            t.subscribers.add(handler)
         }
     }
 
     fun publish(topic: String, message: String) {
-        if(subscribers[topic] != null){
-            for(handler in subscribers[topic]!!){
-                handler(message)
+        val t = broker[topic] ?: return
+        t.queue.add(message)
+    }
+
+    fun runLoop() {
+        while (broker.values.any { it.queue.isNotEmpty() }) {
+            for (topic in broker.values) {
+                val queue = topic.queue
+                while (queue.isNotEmpty()) {
+                    val poppedMessage = queue.removeFirst()
+                    for (subscriber in topic.subscribers) {
+                        subscriber(poppedMessage)
+                    }
+                }
             }
         }
     }
@@ -30,4 +47,7 @@ fun main() {
     ps.publish("news", "hello")
     ps.publish("sports", "goal")
     ps.publish("nobody", "lost")
+
+    ps.subscribe("news") { ps.publish("news", it) }
+    ps.publish("news", "hello2")
 }
