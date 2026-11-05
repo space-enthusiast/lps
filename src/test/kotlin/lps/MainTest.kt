@@ -13,6 +13,7 @@ class MainTest {
         ps.publish("news", "hello")
 
         ps.runLoop()
+        ps.waitForRunLoopStop()
 
         assertEquals(listOf("hello"), seen)
     }
@@ -28,6 +29,7 @@ class MainTest {
         ps.publish("news", "hello")
 
         ps.runLoop()
+        ps.waitForRunLoopStop()
 
         assertEquals(listOf("hello"), seen1)
         assertEquals(listOf("hello"), seen2)
@@ -49,6 +51,7 @@ class MainTest {
         ps.publish("ping", "start")
 
         ps.runLoop()
+        ps.waitForRunLoopStop()
 
         assertEquals(100_000, hops)
     }
