@@ -38,16 +38,4 @@ class PubSub {
 }
 
 fun main() {
-    val ps = PubSub()
-
-    ps.subscribe("news") { println("A got: $it") }
-    ps.subscribe("news") { println("B got: $it") }
-    ps.subscribe("sports") { println("C got: $it") }
-
-    ps.publish("news", "hello")
-    ps.publish("sports", "goal")
-    ps.publish("nobody", "lost")
-
-    ps.subscribe("news") { ps.publish("news", it) }
-    ps.publish("news", "hello2")
 }
