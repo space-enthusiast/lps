@@ -7,12 +7,12 @@ class MainTest {
     @Test
     fun `subscriber receives a published message`() {
         val ps = PubSub()
+        ps.runLoop()
         val seen = mutableListOf<String>()
         ps.subscribe("news") { seen.add(it) }
 
         ps.publish("news", "hello")
 
-        ps.runLoop()
         ps.waitForRunLoopStop()
 
         assertEquals(listOf("hello"), seen)
@@ -21,6 +21,7 @@ class MainTest {
     @Test
     fun `two subscribers receives a published message`() {
         val ps = PubSub()
+        ps.runLoop()
         val seen1 = mutableListOf<String>()
         val seen2 = mutableListOf<String>()
         ps.subscribe("news") { seen1.add(it) }
@@ -28,7 +29,6 @@ class MainTest {
 
         ps.publish("news", "hello")
 
-        ps.runLoop()
         ps.waitForRunLoopStop()
 
         assertEquals(listOf("hello"), seen1)
@@ -38,6 +38,7 @@ class MainTest {
     @Test
     fun `a cycle that stops itself runs to completion`() {
         val ps = PubSub()
+        ps.runLoop()
         var hops = 0
         ps.subscribe("ping") {
             hops++
@@ -50,7 +51,6 @@ class MainTest {
 
         ps.publish("ping", "start")
 
-        ps.runLoop()
         ps.waitForRunLoopStop()
 
         assertEquals(100_000, hops)
