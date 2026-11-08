@@ -1,5 +1,6 @@
 package lps
 
+import kotlin.concurrent.Volatile
 import kotlin.concurrent.thread
 
 class PubSub {
@@ -33,6 +34,7 @@ class PubSub {
     }
 
     private var eventLoop: Thread? = null
+    @Volatile
     private var eventLoopOn: Boolean = true
     fun runLoop() {
         eventLoop = thread(name = "EventLoop") {
