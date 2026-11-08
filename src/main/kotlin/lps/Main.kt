@@ -63,13 +63,4 @@ class PubSub {
     }
 }
 
-fun main() {
-
-    val worker = thread(name = "worker") {
-        println("Running on ${Thread.currentThread().name}")
-    }
-
-    println("main continues without waiting")
-
-    worker.join()
-}
+fun main() { }
