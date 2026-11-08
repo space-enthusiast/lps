@@ -5,7 +5,15 @@ import kotlin.concurrent.thread
 class PubSub {
     private val broker = mutableMapOf<String, Topic>()
 
-    private class Topic {
+    private fun messageExist(): Boolean {
+        val brokerQueues: List<ArrayDeque<String>> = broker.values.map { it.queue }
+        for (queue in brokerQueues) {
+            if (queue.isNotEmpty()) { return true }
+        }
+        return false
+    }
+
+    class Topic {
         val queue = ArrayDeque<String>()
         val subscribers = mutableListOf<(String) -> Unit>()
     }
@@ -29,7 +37,7 @@ class PubSub {
     fun runLoop() {
         eventLoop = thread(name = "EventLoop") {
             while (eventLoopOn) {
-                while (broker.values.any { it.queue.isNotEmpty() }) {
+                while (messageExist()) {
                     for (topic in broker.values) {
                         val queue = topic.queue
                         while (queue.isNotEmpty()) {
@@ -45,6 +53,11 @@ class PubSub {
     }
 
     fun waitForRunLoopStop() {
+        while (true) {
+            if (messageExist().not()) {
+                break
+            }
+        }
         eventLoopOn = false
         eventLoop?.join()
     }
