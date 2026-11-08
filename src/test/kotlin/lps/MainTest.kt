@@ -19,7 +19,20 @@ class MainTest {
 
         ps.publish("news", "hello")
 
-        ps.waitForRunLoopStop()
+        ps.stop()
+
+        assertEquals(listOf("hello"), seen)
+    }
+
+    @Test
+    fun `subscriber receives a published message with drain`() {
+        val ps = PubSub()
+        val seen = mutableListOf<String>()
+        ps.subscribe("news") { seen.add(it) }
+        ps.publish("news", "hello")
+        ps.drain()
+
+        ps.stop()
 
         assertEquals(listOf("hello"), seen)
     }
@@ -35,7 +48,7 @@ class MainTest {
 
         ps.publish("news", "hello")
 
-        ps.waitForRunLoopStop()
+        ps.stop()
 
         assertEquals(listOf("hello"), seen1)
         assertEquals(listOf("hello"), seen2)
@@ -57,7 +70,7 @@ class MainTest {
 
         ps.publish("ping", "start")
 
-        ps.waitForRunLoopStop()
+        ps.stop()
 
         assertEquals(100_000, hops)
     }

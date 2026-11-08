@@ -36,29 +36,39 @@ class PubSub {
     private var eventLoopOn: Boolean = true
     fun runLoop() {
         eventLoop = thread(name = "EventLoop") {
-            while (eventLoopOn) {
-                while (messageExist()) {
-                    for (topic in broker.values) {
-                        val queue = topic.queue
-                        while (queue.isNotEmpty()) {
-                            val poppedMessage = queue.removeFirst()
-                            for (subscriber in topic.subscribers) {
-                                subscriber(poppedMessage)
-                            }
-                        }
-                    }
-                }
-            }
+            loop()
         }
     }
 
-    fun waitForRunLoopStop() {
+    fun stop() {
         while (true) {
             if (messageExist().not()) {
                 break
             }
         }
         eventLoopOn = false
+        join()
+    }
+
+    fun drain() {
+        for (topic in broker.values) {
+            val queue = topic.queue
+            while (queue.isNotEmpty()) {
+                val poppedMessage = queue.removeFirst()
+                for (subscriber in topic.subscribers) {
+                    subscriber(poppedMessage)
+                }
+            }
+        }
+    }
+
+    fun loop() {
+        while (eventLoopOn) {
+            drain()
+        }
+    }
+
+    fun join() {
         eventLoop?.join()
     }
 }
