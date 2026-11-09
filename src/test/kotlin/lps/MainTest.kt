@@ -1,6 +1,8 @@
 package lps
 
 import org.junit.jupiter.api.Timeout
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -76,5 +78,32 @@ class MainTest {
         ps.join()
 
         assertEquals(100_000, hops)
+    }
+
+    @Test
+    fun `stop during a handler still delivers messages already queued`() {
+        val ps = PubSub()
+        val seen = mutableListOf<String>()
+        val inHandler = CountDownLatch(1)
+        val release = AtomicBoolean(false)
+        ps.subscribe("news") {
+            if (it == "first") {
+                inHandler.countDown()
+                // Not CountDownLatch.await(): an interruptible wait would throw on stop()
+                // and take the catch path, hiding the case this test is about.
+                while (!release.get()) Thread.onSpinWait()
+            }
+            seen.add(it)
+        }
+        ps.runLoop()
+
+        ps.publish("news", "first")
+        inHandler.await()               // the worker is now inside the handler for "first"
+        ps.publish("news", "second")    // queued while the handler is still running
+        ps.stop()                       // interrupt arrives during the handler
+        release.set(true)               // let the handler finish
+        ps.join()
+
+        assertEquals(listOf("first", "second"), seen)
     }
 }
