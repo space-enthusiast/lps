@@ -58,7 +58,7 @@ class PubSub {
     }
 
     fun loop() {
-        while (Thread.currentThread().isInterrupted.not()) {
+        while (broker.isNotEmpty() || Thread.currentThread().isInterrupted.not()) {
             val messages: List<Message> = take()
             for ((topic, message) in messages) {
                 val subscribers = topicToSubscribers[topic] ?: continue
