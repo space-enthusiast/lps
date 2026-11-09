@@ -3,6 +3,8 @@ package lps
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -127,5 +129,28 @@ class MainTest {
         ps.join()
 
         assertEquals(listOf("second"), seen)
+    }
+
+    @Test
+    fun `concurrent first subscribes to the same topic are all kept`() {
+        // Stress test: the lost-handler race is rare per topic, so race on 100k fresh topics.
+        val ps = PubSub()
+        val threads = 4
+        val topics = 100_000
+        val calls = AtomicInteger()
+        val go = CountDownLatch(1)
+        val workers = List(threads) {
+            thread {
+                go.await() // start all threads at the same moment
+                for (i in 0 until topics) ps.subscribe("t$i") { calls.incrementAndGet() }
+            }
+        }
+        go.countDown()
+        workers.forEach { it.join() }
+
+        for (i in 0 until topics) ps.publish("t$i", "x")
+        ps.drain()
+
+        assertEquals(threads * topics, calls.get())
     }
 }
