@@ -20,6 +20,7 @@ class MainTest {
         ps.publish("news", "hello")
 
         ps.stop()
+        ps.join()
 
         assertEquals(listOf("hello"), seen)
     }
@@ -33,6 +34,7 @@ class MainTest {
         ps.drain()
 
         ps.stop()
+        ps.join()
 
         assertEquals(listOf("hello"), seen)
     }
@@ -49,6 +51,7 @@ class MainTest {
         ps.publish("news", "hello")
 
         ps.stop()
+        ps.join()
 
         assertEquals(listOf("hello"), seen1)
         assertEquals(listOf("hello"), seen2)
@@ -65,12 +68,12 @@ class MainTest {
         }
         ps.subscribe("pong") {
             hops++
-            if (hops < 100_000) ps.publish("ping", it)
+            if (hops < 100_000) ps.publish("ping", it) else ps.stop()
         }
 
         ps.publish("ping", "start")
 
-        ps.stop()
+        ps.join()
 
         assertEquals(100_000, hops)
     }

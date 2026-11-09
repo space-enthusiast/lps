@@ -1,7 +1,6 @@
 package lps
 
 import java.util.concurrent.LinkedBlockingQueue
-import kotlin.concurrent.Volatile
 import kotlin.concurrent.thread
 
 class PubSub {
@@ -24,22 +23,18 @@ class PubSub {
     }
 
     private var eventLoop: Thread? = null
-    @Volatile
-    private var eventLoopOn: Boolean = true
     fun runLoop() {
         eventLoop = thread(name = "EventLoop") {
-            loop()
+            try {
+                loop()
+            } catch (_: InterruptedException) {
+                drain()
+            }
         }
     }
 
     fun stop() {
-        while (true) {
-            if (broker.isEmpty()) {
-                break
-            }
-        }
-        eventLoopOn = false
-        join()
+        eventLoop?.interrupt()
     }
 
     fun drain() {
@@ -52,9 +47,25 @@ class PubSub {
         }
     }
 
+    fun take(): List<Message> {
+        val messages: MutableList<Message> = mutableListOf()
+        val message = broker.take() // stops the thread if there is no message in queue
+        messages.add(message)
+        while (broker.isNotEmpty()) {
+            messages.add(broker.poll())
+        }
+        return messages
+    }
+
     fun loop() {
-        while (eventLoopOn) {
-            drain()
+        while (Thread.currentThread().isInterrupted.not()) {
+            val messages: List<Message> = take()
+            for ((topic, message) in messages) {
+                val subscribers = topicToSubscribers[topic] ?: continue
+                for (subscriber in subscribers) {
+                    subscriber(message)
+                }
+            }
         }
     }
 
