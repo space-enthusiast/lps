@@ -1,12 +1,14 @@
 package lps
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.concurrent.thread
 
 class PubSub {
     data class Message(val message: String, val topic: String)
 
-    private val topicToSubscribers: MutableMap<String, MutableList<(String) -> Unit>> = mutableMapOf()
+    private val topicToSubscribers: ConcurrentHashMap<String, CopyOnWriteArrayList<(String) -> Unit>> = ConcurrentHashMap()
     private val broker: LinkedBlockingQueue<Message> = LinkedBlockingQueue<Message>()
 
     fun subscribe(topic: String, handler: (String) -> Unit) {
@@ -14,7 +16,9 @@ class PubSub {
         if (subscribers != null) {
             subscribers.add(handler)
         } else {
-            topicToSubscribers[topic] = mutableListOf(handler)
+            topicToSubscribers[topic] = CopyOnWriteArrayList<(String) -> Unit>().also {
+                it.add(handler)
+            }
         }
     }
 
