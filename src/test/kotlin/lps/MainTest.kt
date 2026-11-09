@@ -106,4 +106,25 @@ class MainTest {
 
         assertEquals(listOf("first", "second"), seen)
     }
+
+    @Test
+    fun `publish message while handling published messages`() {
+        val ps = PubSub()
+        val seen = mutableListOf<String>()
+
+        ps.subscribe("news") {
+            ps.subscribe("news") {
+                seen.add(it)
+            }
+        }
+
+        ps.runLoop()
+
+        ps.publish("news", "hello")
+
+        ps.stop()
+        ps.join()
+
+        assertEquals(listOf("hello"), seen)
+    }
 }
