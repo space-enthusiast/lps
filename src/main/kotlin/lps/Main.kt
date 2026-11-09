@@ -12,14 +12,7 @@ class PubSub {
     private val broker: LinkedBlockingQueue<Message> = LinkedBlockingQueue<Message>()
 
     fun subscribe(topic: String, handler: (String) -> Unit) {
-        val subscribers = topicToSubscribers[topic]
-        if (subscribers != null) {
-            subscribers.add(handler)
-        } else {
-            topicToSubscribers[topic] = CopyOnWriteArrayList<(String) -> Unit>().also {
-                it.add(handler)
-            }
-        }
+        topicToSubscribers.computeIfAbsent(topic) { CopyOnWriteArrayList() }.add(handler)
     }
 
     fun publish(topic: String, message: String) {
