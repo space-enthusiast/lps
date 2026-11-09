@@ -120,11 +120,12 @@ class MainTest {
 
         ps.runLoop()
 
-        ps.publish("news", "hello")
+        ps.publish("news", "first")
+        ps.publish("news", "second")
 
         ps.stop()
         ps.join()
 
-        assertEquals(listOf("hello"), seen)
+        assertEquals(listOf("second"), seen)
     }
 }
